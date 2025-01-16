@@ -1894,7 +1894,7 @@ erpnext.TransactionController = class TransactionController extends erpnext.taxe
 
 	apply_product_discount(args) {
 		// Note: somehow free items are removed even before this point
-		let existing_free_items_for_trigger = this.frm.doc.items.filter(d => { return d.is_free_item && d.parent_item_row == args.name}) || [];
+		let existing_free_items_for_trigger = this.frm.doc.items.filter(d => { return d.is_free_item && d.trigger_for_free_item == args.name}) || [];
 
 		args.free_item_data.forEach(pr_row => {
 			let row_to_modify = {};
@@ -1911,7 +1911,7 @@ erpnext.TransactionController = class TransactionController extends erpnext.taxe
 			for (let key in pr_row) {
 				row_to_modify[key] = pr_row[key];
 			}
-			row_to_modify["parent_item_row"] = args.name;
+			row_to_modify["trigger_for_free_item"] = args.name;
 			this.frm.script_manager.copy_from_first_row("items", row_to_modify, ["expense_account", "income_account"]);
 		});
 
