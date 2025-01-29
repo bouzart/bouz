@@ -428,6 +428,7 @@
    "fieldname": "split_from",
    "fieldtype": "Link",
    "label": "Split From",
+   "no_copy": 1,
    "options": "Asset",
    "read_only": 1
   },
@@ -593,7 +594,7 @@
    "link_fieldname": "target_asset"
   }
  ],
- "modified": "2025-01-21 15:21:38.136875",
+ "modified": "2025-01-28 15:34:27.555624",
  "modified_by": "Administrator",
  "module": "Assets",
  "name": "Asset",
