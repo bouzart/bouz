@@ -30,11 +30,8 @@ from erpnext.assets.doctype.asset.depreciation import (
 	scrap_asset,
 )
 from erpnext.assets.doctype.asset_depreciation_schedule.asset_depreciation_schedule import (
-	_check_is_pro_rata,
-	_get_pro_rata_amt,
 	get_asset_depr_schedule_doc,
 	get_depr_schedule,
-	get_depreciation_amount,
 )
 from erpnext.stock.doctype.purchase_receipt.purchase_receipt import (
 	make_purchase_invoice as make_invoice,
@@ -258,7 +255,13 @@ class TestAsset(AssetSetup):
 			asset.gross_purchase_amount - asset.finance_books[0].value_after_depreciation,
 			asset.precision("gross_purchase_amount"),
 		)
-		pro_rata_amount, _, _ = _get_pro_rata_amt(
+
+		second_asset_depr_schedule.depreciation_amount = 9000
+		second_asset_depr_schedule.asset_doc = asset
+		second_asset_depr_schedule.get_finance_book_row()
+		second_asset_depr_schedule.fetch_asset_details()
+
+		pro_rata_amount, _, _ = second_asset_depr_schedule._get_pro_rata_amt(
 			asset.finance_books[0],
 			9000,
 			add_days(get_last_day(add_months(purchase_date, 1)), 1),
@@ -344,9 +347,12 @@ class TestAsset(AssetSetup):
 		self.assertEqual(second_asset_depr_schedule.status, "Active")
 		self.assertEqual(first_asset_depr_schedule.status, "Cancelled")
 
-		pro_rata_amount, _, _ = _get_pro_rata_amt(
-			asset.finance_books[0],
-			9000,
+		second_asset_depr_schedule.depreciation_amount = 9000
+		second_asset_depr_schedule.asset_doc = asset
+		second_asset_depr_schedule.get_finance_book_row()
+		second_asset_depr_schedule.fetch_asset_details()
+
+		pro_rata_amount, _, _ = second_asset_depr_schedule._get_pro_rata_amt(
 			add_days(get_last_day(add_months(purchase_date, 1)), 1),
 			date,
 			original_schedule_date=get_last_day(nowdate()),
@@ -1027,7 +1033,7 @@ class TestDepreciationBasics(AssetSetup):
 
 		asset_depr_schedule_doc = get_asset_depr_schedule_doc(asset.name, "Active")
 
-		depreciation_amount, prev_per_day_depr = get_depreciation_amount(
+		depreciation_amount = asset_depr_schedule_doc.get_depreciation_amount(
 			asset_depr_schedule_doc, asset, 100000, 100000, asset.finance_books[0]
 		)
 		self.assertEqual(depreciation_amount, 30000)
@@ -1074,7 +1080,7 @@ class TestDepreciationBasics(AssetSetup):
 	def test_check_is_pro_rata(self):
 		"""Tests if check_is_pro_rata() returns the right value(i.e. checks if has_pro_rata is accurate)."""
 
-		asset = create_asset(item_code="Macbook Pro", available_for_use_date="2019-12-31", do_not_save=1)
+		asset = create_asset(item_code="Macbook Pro", available_for_use_date="2019-12-31")
 
 		asset.calculate_depreciation = 1
 		asset.append(
@@ -1087,9 +1093,15 @@ class TestDepreciationBasics(AssetSetup):
 				"depreciation_start_date": "2020-12-31",
 			},
 		)
+		asset.save()
 
-		has_pro_rata = _check_is_pro_rata(asset, asset.finance_books[0])
-		self.assertFalse(has_pro_rata)
+		depr_schedule_doc = get_asset_depr_schedule_doc(asset.name, "Draft")
+		depr_schedule_doc.asset_doc = asset
+		depr_schedule_doc.get_finance_book_row()
+		depr_schedule_doc.fetch_asset_details()
+		depr_schedule_doc._check_is_pro_rata()
+
+		self.assertFalse(depr_schedule_doc.has_pro_rata)
 
 		asset.finance_books = []
 		asset.append(
@@ -1102,9 +1114,15 @@ class TestDepreciationBasics(AssetSetup):
 				"depreciation_start_date": "2020-07-01",
 			},
 		)
+		asset.save()
 
-		has_pro_rata = _check_is_pro_rata(asset, asset.finance_books[0])
-		self.assertTrue(has_pro_rata)
+		depr_schedule_doc = get_asset_depr_schedule_doc(asset.name, "Draft")
+		depr_schedule_doc.asset_doc = asset
+		depr_schedule_doc.get_finance_book_row()
+		depr_schedule_doc.fetch_asset_details()
+		depr_schedule_doc._check_is_pro_rata()
+
+		self.assertTrue(depr_schedule_doc.has_pro_rata)
 
 	def test_expected_value_after_useful_life_greater_than_purchase_amount(self):
 		"""Tests if an error is raised when expected_value_after_useful_life(110,000) > gross_purchase_amount(100,000)."""
@@ -1519,7 +1537,7 @@ class TestDepreciationBasics(AssetSetup):
 		)
 
 		self.assertSequenceEqual(gle, expected_gle)
-		self.assertEqual(asset.get("value_after_depreciation"), 0)
+		self.assertEqual(asset.get("value_after_depreciation"), 70000)
 
 	def test_expected_value_change(self):
 		"""
@@ -1616,6 +1634,10 @@ class TestDepreciationBasics(AssetSetup):
 			frequency_of_depreciation=1,
 			submit=1,
 		)
+		depr_expense_account = frappe.get_doc("Account", "_Test Depreciations - _TC")
+		depr_expense_account.root_type = "Expense"
+		depr_expense_account.parent_account = "Expenses - _TC"
+		depr_expense_account.save()
 
 		self.assertEqual(asset.status, "Submitted")
 		self.assertEqual(asset.get_value_after_depreciation(), 100000)

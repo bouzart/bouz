@@ -405,7 +405,6 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
    "collapsible_depends_on": "is_existing_asset",
    "fieldname": "purchase_details_section",
    "fieldtype": "Section Break",
@@ -429,6 +428,7 @@
    "fieldname": "split_from",
    "fieldtype": "Link",
    "label": "Split From",
+   "no_copy": 1,
    "options": "Asset",
    "read_only": 1
   },
@@ -479,14 +479,17 @@
    "fieldname": "total_asset_cost",
    "fieldtype": "Currency",
    "label": "Total Asset Cost",
+   "no_copy": 1,
    "options": "Company:company:default_currency",
    "read_only": 1
   },
   {
+   "default": "0",
    "depends_on": "eval:doc.docstatus > 0",
    "fieldname": "additional_asset_cost",
    "fieldtype": "Currency",
    "label": "Additional Asset Cost",
+   "no_copy": 1,
    "options": "Company:company:default_currency",
    "read_only": 1
   },
@@ -592,7 +595,7 @@
    "link_fieldname": "target_asset"
   }
  ],
- "modified": "2024-12-26 14:23:20.968882",
+ "modified": "2025-02-04 00:16:58.120156",
  "modified_by": "Administrator",
  "module": "Assets",
  "name": "Asset",
