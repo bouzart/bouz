@@ -93,6 +93,7 @@ class SalesInvoiceItem(Document):
 		stock_uom_rate: DF.Currency
 		target_warehouse: DF.Link | None
 		total_weight: DF.Float
+		trigger_for_free_item: DF.Data | None
 		uom: DF.Link
 		use_serial_batch_fields: DF.Check
 		warehouse: DF.Link | None

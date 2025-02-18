@@ -287,6 +287,38 @@ class TransactionBase(StatusUpdater):
 			)
 		)
 
+	def update_temp_key_to_permanent_key(self):
+		def print_item(x):
+			print(
+				(
+					x.item_code,
+					("name", x.name),
+					("__temporary_name", x.get("__temporary_name")),
+					("trigger_for_free_item", x.get("trigger_for_free_item")),
+					("__islocal", x.get("__islocal")),
+				)
+			)
+
+		print("----------before----------")
+		for x in self.items:
+			print_item(x)
+
+		# generate map
+		tk_to_pk = {}
+		for x in self.items:
+			if x.get("__islocal") and x.name and x.get("__temporary_name"):
+				tk_to_pk[x.get("__temporary_name")] = x.name
+
+		print(tk_to_pk)
+
+		# update temp with permanent key
+		for x in self.items:
+			if x.get("__islocal") and x.trigger_for_free_item:
+				x.trigger_for_free_item = tk_to_pk[x.trigger_for_free_item]
+		print("----------after----------")
+		for x in self.items:
+			print_item(x)
+
 	@frappe.whitelist()
 	def process_item_selection(self, item_idx):
 		# Server side 'item' doc. Update this to reflect in UI
@@ -365,13 +397,14 @@ class TransactionBase(StatusUpdater):
 					x
 					for x in existing_free_items
 					if x.item_code == free_item.get("item_code")
-					and x.pricing_rules == free_item.get("pricing_rules")
+					and x.get("trigger_for_free_item") == item_obj.get("__temporary_name")
 				]
 				if _matches:
 					row_to_modify = _matches[0]
 				else:
 					row_to_modify = self.append("items")
 
+				setattr(row_to_modify, "trigger_for_free_item", item_obj.get("__temporary_name"))
 				for k, _v in free_item.items():
 					setattr(row_to_modify, k, free_item.get(k))
 

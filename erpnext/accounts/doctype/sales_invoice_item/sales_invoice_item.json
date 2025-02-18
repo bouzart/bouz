@@ -46,10 +46,12 @@
   "col_break3",
   "base_rate",
   "base_amount",
-  "pricing_rules",
   "stock_uom_rate",
-  "is_free_item",
   "grant_commission",
+  "pricing_rule_section",
+  "pricing_rules",
+  "is_free_item",
+  "trigger_for_free_item",
   "section_break_21",
   "net_rate",
   "net_amount",
@@ -952,12 +954,23 @@
    "no_copy": 1,
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "pricing_rule_section",
+   "fieldtype": "Section Break",
+   "label": "Pricing Rule"
+  },
+  {
+   "fieldname": "trigger_for_free_item",
+   "fieldtype": "Data",
+   "label": "Trigger For Free Item",
+   "read_only": 1
   }
  ],
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-11-25 16:27:33.287341",
+ "modified": "2025-01-16 13:25:04.979013",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice Item",
