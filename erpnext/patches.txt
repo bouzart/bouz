@@ -402,3 +402,4 @@ execute:frappe.db.set_single_value("Accounts Settings", "exchange_gain_loss_post
 erpnext.patches.v14_0.disable_add_row_in_gross_profit
 erpnext.stock.doctype.purchase_receipt_item.patches.rename_field_from_rate_difference_to_amount_difference
 erpnext.stock.doctype.purchase_receipt_item.patches.recalculate_amount_difference_field
+erpnext.patches.v14_0.update_posting_datetime
