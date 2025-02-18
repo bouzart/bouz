@@ -11,6 +11,7 @@ from erpnext.controllers.accounts_controller import get_taxes_and_charges
 from erpnext.controllers.sales_and_purchase_return import get_rate_for_return
 from erpnext.controllers.stock_controller import StockController
 from erpnext.stock.doctype.item.item import set_item_default
+from erpnext.stock.doctype.packed_item.packed_item import get_product_bundle
 from erpnext.stock.get_item_details import get_bin_details, get_conversion_factor
 from erpnext.stock.utils import get_incoming_rate, get_valuation_method
 
@@ -316,7 +317,7 @@ class SellingController(StockController):
 	def get_item_list(self):
 		il = []
 		for d in self.get("items"):
-			if self.has_product_bundle(d.item_code):
+			if d.product_bundle_name or self.has_product_bundle(d.item_code):
 				for p in self.get("packed_items"):
 					if p.parent_detail_docname == d.name and p.parent_item == d.item_code:
 						# the packing details table's qty is already multiplied with parent's qty
@@ -787,6 +788,17 @@ class SellingController(StockController):
 		from erpnext.controllers.buying_controller import validate_item_type
 
 		validate_item_type(self, "is_sales_item", "sales")
+
+		for item in self.items:
+			bundle = None
+			if self.has_product_bundle(item.item_code):
+				bundle = get_product_bundle(item.item_code, product_bundle_name=item.product_bundle_name)
+				if bundle.new_item_code != item.item_code:
+					# The row item and the bundle's item are mismatched, override the product_bundle_name
+					bundle = get_product_bundle(item.item_code)  # Fetch any bundle of the correct item
+
+			# If there is a bundle, write its name, if not clear the field.
+			item.product_bundle_name = bundle.name if bundle else None
 
 	def update_stock_reservation_entries(self) -> None:
 		"""Updates Delivered Qty in Stock Reservation Entries."""

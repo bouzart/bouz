@@ -535,7 +535,7 @@ class SalesOrder(SellingController):
 
 		for d in self.get("items"):
 			if (not so_item_rows or d.name in so_item_rows) and not d.delivered_by_supplier:
-				if self.has_product_bundle(d.item_code):
+				if d.product_bundle_name or self.has_product_bundle(d.item_code):
 					for p in self.get("packed_items"):
 						if p.parent_detail_docname == d.name and p.parent_item == d.item_code:
 							_valid_for_reserve(p.item_code, p.warehouse)
@@ -608,9 +608,11 @@ class SalesOrder(SellingController):
 		per_picked = 0.0
 
 		for so_item in self.items:
-			if cint(
-				frappe.get_cached_value("Item", so_item.item_code, "is_stock_item")
-			) or self.has_product_bundle(so_item.item_code):
+			if (
+				cint(frappe.get_cached_value("Item", so_item.item_code, "is_stock_item"))
+				or so_item.product_bundle_name
+				or self.has_product_bundle(so_item.item_code)
+			):
 				total_picked_qty += flt(so_item.picked_qty)
 				total_qty += flt(so_item.stock_qty)
 
@@ -893,8 +895,8 @@ def make_material_request(source_name, target_doc=None):
 					"parent": "sales_order",
 					"delivery_date": "required_by",
 				},
-				"condition": lambda item: not frappe.db.exists(
-					"Product Bundle", {"name": item.item_code, "disabled": 0}
+				"condition": lambda item: not is_product_bundle(
+					item.item_code, product_bundle_name=item.get("product_bundle_name")
 				)
 				and get_remaining_qty(item) > 0,
 				"postprocess": update_item,
@@ -1503,7 +1505,7 @@ def make_purchase_order(source_name, selected_items=None, target_doc=None):
 				"postprocess": update_item,
 				"condition": lambda doc: doc.ordered_qty < doc.stock_qty
 				and doc.item_code in items_to_map
-				and not is_product_bundle(doc.item_code),
+				and not is_product_bundle(doc.item_code, product_bundle_name=doc.get("product_bundle_name")),
 			},
 			"Packed Item": {
 				"doctype": "Purchase Order Item",
@@ -1551,8 +1553,10 @@ def set_delivery_date(items, sales_order):
 			item.schedule_date = delivery_by_item[item.product_bundle]
 
 
-def is_product_bundle(item_code):
-	return frappe.db.exists("Product Bundle", {"name": item_code, "disabled": 0})
+def is_product_bundle(item_code="", *, product_bundle_name=""):
+	from erpnext.stock.doctype.packed_item.packed_item import is_product_bundle
+
+	return is_product_bundle(item_code, product_bundle_name=product_bundle_name)
 
 
 @frappe.whitelist()
@@ -1691,7 +1695,7 @@ def create_pick_list(source_name, target_doc=None):
 		return (
 			abs(item.delivered_qty) < abs(item.qty)
 			and item.delivered_by_supplier != 1
-			and not is_product_bundle(item.item_code)
+			and not is_product_bundle(item.item_code, product_bundle_name=item.product_bundle_name)
 		)
 
 	# Don't allow a Pick List to be created against a Sales Order that has reserved stock.
@@ -1761,12 +1765,11 @@ def get_work_order_items(sales_order, for_raw_material_request=0):
 
 		items = []
 		item_codes = [i.item_code for i in so.items]
-		product_bundle_parents = [
-			pb.new_item_code
-			for pb in frappe.get_all(
-				"Product Bundle", {"new_item_code": ["in", item_codes], "disabled": 0}, ["new_item_code"]
-			)
-		]
+		product_bundle_parents = frappe.get_all(
+			"Product Bundle",
+			{"new_item_code": ["in", item_codes], "disabled": 0},
+			pluck="new_item_code",
+		)
 
 		for table in [so.items, so.packed_items]:
 			for i in table:
