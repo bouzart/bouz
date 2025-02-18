@@ -5,9 +5,9 @@
 	padding: 1%;
 
 	section {
-		min-height: 45rem;
-		height: calc(100vh - 200px);
-		max-height: calc(100vh - 200px);
+		min-height: 30rem;
+		height: calc(100vh - 100px);
+		max-height: calc(100vh - 100px);
 	}
 
 	.frappe-control {
@@ -373,6 +373,7 @@
 					flex-direction: column;
 					flex: 1 1 0%;
 					overflow-y: scroll;
+					min-height: 50px;
 
 					> .cart-item-wrapper {
 						@extend .pointer-no-select;
