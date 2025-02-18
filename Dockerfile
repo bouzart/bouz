@@ -4,12 +4,17 @@ FROM frappe/bench:latest
 # Définir le dossier de travail
 WORKDIR /home/frappe
 
-# Installation des prérequis et création du bench
-RUN useradd -m -s /bin/bash frappe && \
-    chown -R frappe:frappe /home/frappe && \
-    su frappe -c "bench init --frappe-branch version-14 frappe-bench" && \
-    cd frappe-bench && \
-    su frappe -c "bench get-app erpnext --branch version-14"
+# Création de l'utilisateur frappe
+RUN useradd -m -s /bin/bash frappe
+
+# Changer le propriétaire du dossier de travail
+RUN chown -R frappe:frappe /home/frappe
+
+# Initialiser le bench
+RUN su frappe -c "bench init --frappe-branch version-14 frappe-bench"
+
+# Installer l'application ERPNext
+RUN cd /home/frappe/frappe-bench && su frappe -c "bench get-app erpnext --branch version-14"
 
 # Configuration de la base de données (à adapter si Render ne propose pas MariaDB)
 ENV DB_PORT=3306
