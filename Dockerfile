@@ -5,7 +5,8 @@ FROM frappe/bench:latest
 WORKDIR /home/frappe
 
 # Installer les dépendances requises
-RUN apt-get update && apt-get install -y \
+RUN apt-get clean && apt-get update --allow-releaseinfo-change && \
+    apt-get install -y --no-install-recommends \
     python3-pip python3-dev libmysqlclient-dev \
     mariadb-client redis curl && \
     rm -rf /var/lib/apt/lists/*
