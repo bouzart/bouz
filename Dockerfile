@@ -9,7 +9,6 @@ RUN apt-get clean && apt-get update --allow-releaseinfo-change && \
     apt-get install -y --no-install-recommends \
     python3-pip python3-dev libmysqlclient-dev \
     mariadb-client redis curl && \
-    rm -rf /var/lib/apt/lists/*
 
 # Initialiser le bench
 RUN bench init --frappe-branch version-14 frappe-bench
