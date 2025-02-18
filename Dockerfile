@@ -27,7 +27,7 @@ ENV DB_PASSWORD=123
 ENV DB_NAME=DBbouz
 
 # Créer un site ERPNext et installer l’application
-RUN bench new-site bouz-f9af.onrender.com --admin-password=admin --mariadb-root-password=root && \
+RUN bench new-site bouz-f9af.onrender.com --admin-password=admin --mariadb-root-password=123 && \
     bench --site bouz-f9af.onrender.com install-app erpnext
 
 # Exposer le port 8000
